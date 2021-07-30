@@ -1,5 +1,5 @@
 module sb_register(input clk, enable_in, enable_out, reset, data, output out);
-  wire q, q_bar;
+  wire q;
 
   assign out = (enable_out) ? q : 1'bZ;
 
@@ -9,7 +9,7 @@ module sb_register(input clk, enable_in, enable_out, reset, data, output out);
     .preset (1'b1),
     .clear (reset),
     .q (q),
-    .q_bar (q_bar)
+    .q_bar ()
   );
 endmodule
 
