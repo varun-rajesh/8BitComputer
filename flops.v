@@ -1,3 +1,4 @@
+//negative edge triggered; d is active high; preset and clear are active low
 module d_ff(input clk, d, preset, clear, output q, q_bar);
 
   wire master_q;
