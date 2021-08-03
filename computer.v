@@ -21,6 +21,7 @@ module computer(input clk, reset, input[2047:0] code);
 
   reg alu_a_enable_in, alu_b_enable_in, alu_c_enable_out, flags_enable_in;
   reg stack_write_enable, stack_read_enable;
+  reg mem_read_enable, mem_write_enable;
 
   assign instruction[0] = code[{code_pointer, 3'b000}];
   assign instruction[1] = code[{code_pointer, 3'b001}];
@@ -34,10 +35,6 @@ module computer(input clk, reset, input[2047:0] code);
   assign instruction_enable_in = (instruction_count == 8'b0);
   assign operand1_enable_in = (instruction_count == 8'b1);
   assign operand2_enable_in = (instruction_count == 8'b10);
-
-  always @ * begin
-    $display("t=%0t, instruction=%h, instruction_out=%h, a_enable_in=%b", $time, instruction, instruction_out, a_enable_in);
-  end
 
   always @ * begin
     case(instruction)
@@ -284,6 +281,11 @@ module computer(input clk, reset, input[2047:0] code);
     endcase
   end
 
+  //flags_enable_in
+  always @ * begin
+    flags_enable_in = (instruction_out == 8'h09 | instruction_out == 8'ha | instruction_out == 8'hb) ? 1'b1 : 1'b0;
+  end
+
   //stack_read_enable
   always @ * begin
     stack_read_enable <= (instruction_count == 8'h01 & instruction_out == 8'h0d) ? 1'b1 : 1'b0;
@@ -402,5 +404,10 @@ module computer(input clk, reset, input[2047:0] code);
     .reset (reset),
     .bus (bus),
     .out (bus_out)
+  );
+
+  memory mem(
+    .clk (clk),
+    .read_enable ()
   );
 endmodule
