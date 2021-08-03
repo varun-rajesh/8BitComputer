@@ -8,6 +8,7 @@ module computer(input clk, reset, input[2047:0] code);
   reg[7:0] current_instruction_limit;
   wire instruction_enable_in;
   wire operand1_enable_in, operand2_enable_in;
+  wire equal, greater, lesser;
 
   reg[7:0] bus;
   wire[7:0] bus_out;
@@ -22,6 +23,7 @@ module computer(input clk, reset, input[2047:0] code);
   reg alu_a_enable_in, alu_b_enable_in, alu_c_enable_out, flags_enable_in;
   reg stack_write_enable, stack_read_enable;
   reg mem_read_enable, mem_write_enable;
+  reg branch_enable;
 
   assign instruction[0] = code[{code_pointer, 3'b000}];
   assign instruction[1] = code[{code_pointer, 3'b001}];
@@ -55,6 +57,10 @@ module computer(input clk, reset, input[2047:0] code);
       8'h0e: current_instruction_limit <= 8'h03;
       8'h0f: current_instruction_limit <= 8'h03;
       8'h10: current_instruction_limit <= 8'h03;
+      8'h11: current_instruction_limit <= 8'h02;
+      8'h12: current_instruction_limit <= 8'h02;
+      8'h13: current_instruction_limit <= 8'h02;
+      8'h14: current_instruction_limit <= 8'h02;
       default: current_instruction_limit <= 8'h01;
     endcase
   end
@@ -74,7 +80,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h10: begin
         a_enable_in <= (instruction_count == 8'h02 & instruction == 8'h00) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f: begin
+      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f, 8'h11, 8'h12, 8'h13, 8'h14: begin
         a_enable_in <= 1'b0;
       end
       default: a_enable_in = 1'b0;
@@ -93,7 +99,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h04, 8'h07, 8'h0a, 8'h0c: begin
         a_enable_out <= (instruction_count == 8'h01 & instruction == 8'h00) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         a_enable_out <= 1'b0;
       end
       default: a_enable_out = 1'b0;
@@ -115,7 +121,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h10: begin
         b_enable_in <= (instruction_count == 8'h02 & instruction == 8'h01) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f: begin
+      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f, 8'h11, 8'h12, 8'h13, 8'h14: begin
         b_enable_in <= 1'b0;
       end
       default: b_enable_in = 1'b0;
@@ -134,7 +140,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h04, 8'h07, 8'h0a, 8'h0c: begin
         b_enable_out <= (instruction_count == 8'h01 & instruction == 8'h01) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         b_enable_out <= 1'b0;
       end
       default: b_enable_out = 1'b0;
@@ -156,7 +162,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h10: begin
         c_enable_in <= (instruction_count == 8'h02 & instruction == 8'h02) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f: begin
+      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f, 8'h11, 8'h12, 8'h13, 8'h14: begin
         c_enable_in <= 1'b0;
       end
       default: c_enable_in = 1'b0;
@@ -175,7 +181,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h04, 8'h07, 8'h0a, 8'h0c: begin
         c_enable_out <= (instruction_count == 8'h01 & instruction == 8'h02) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         c_enable_out <= 1'b0;
       end
       default: c_enable_out = 1'b0;
@@ -197,7 +203,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h10: begin
         d_enable_in <= (instruction_count == 8'h02 & instruction == 8'h03) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f: begin
+      8'h00, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0e, 8'h0f, 8'h11, 8'h12, 8'h13, 8'h14: begin
         d_enable_in <= 1'b0;
       end
       default: d_enable_in = 1'b0;
@@ -216,7 +222,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h04, 8'h07, 8'h0a, 8'h0c: begin
         d_enable_out <= (instruction_count == 8'h01 & instruction == 8'h03) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h05, 8'h08, 8'h0b, 8'h0d, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         d_enable_out <= 1'b0;
       end
       default: d_enable_out = 1'b0;
@@ -226,7 +232,7 @@ module computer(input clk, reset, input[2047:0] code);
   //bus
   always @ * begin
     case(instruction_out)
-      8'h01, 8'h0f: begin
+      8'h01, 8'h0f, 8'h11, 8'h12, 8'h13, 8'h14: begin
         bus <= instruction;
       end
       8'h04, 8'h07, 8'h0a, 8'h0f: begin
@@ -246,10 +252,10 @@ module computer(input clk, reset, input[2047:0] code);
   //alu_ain
   always @ * begin
     case(instruction_out)
-      8'h03, 8'h04, 8'h05, 8'h06, 8'h07, 8'h08: begin
+      8'h03, 8'h04, 8'h05, 8'h06, 8'h07, 8'h08, 8'h09, 8'h0a, 8'h0b: begin
         alu_a_enable_in <= (instruction_count == 8'h01) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h02, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h02, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         alu_a_enable_in <= 1'b0;
       end
       default: alu_a_enable_in <= 1'b0;
@@ -259,10 +265,10 @@ module computer(input clk, reset, input[2047:0] code);
   //alu_bin
   always @ * begin
     case(instruction_out)
-      8'h03, 8'h04, 8'h05, 8'h06, 8'h07, 8'h08: begin
+      8'h03, 8'h04, 8'h05, 8'h06, 8'h07, 8'h08, 8'h09, 8'h0a, 8'h0b: begin
         alu_b_enable_in <= (instruction_count == 8'h02) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h02, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h02, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         alu_b_enable_in <= 1'b0;
       end
       default: alu_b_enable_in <= 1'b0;
@@ -275,7 +281,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h03, 8'h04, 8'h05, 8'h06, 8'h07, 8'h08: begin
         alu_c_enable_out <= (instruction_count == 8'h03) ? 1'b1 : 1'b0;
       end
-      8'h00, 8'h01, 8'h02, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10: begin
+      8'h00, 8'h01, 8'h02, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14: begin
         alu_c_enable_out <= 1'b0;
       end
       default: alu_c_enable_out <= 1'b0;
@@ -307,9 +313,23 @@ module computer(input clk, reset, input[2047:0] code);
     mem_write_enable <= (instruction_count == 8'h02 & (instruction_out == 8'h0e | instruction_out == 8'h0f)) ? 1'b1 : 1'b0;
   end
 
+  //branch_enable
+  always @ * begin
+    case(instruction_out)
+      8'h11: branch_enable <= (instruction_count == 8'h1 & equal);
+      8'h12: branch_enable <= (instruction_count == 8'h1 & ~equal);
+      8'h13: branch_enable <= (instruction_count == 8'h1 & greater);
+      8'h14: branch_enable <= (instruction_count == 8'h1 & lesser);
+      8'h0, 8'h1, 8'h2, 8'h3, 8'h4, 8'h5, 8'h6, 8'h7, 8'h8, 8'h9, 8'ha, 8'hb, 8'hc, 8'hd, 8'he, 8'hf, 8'h10: branch_enable <= 0;
+      default: branch_enable <= 0;
+    endcase
+  end
+
   counter cp(
     .clk (clk),
     .reset (reset),
+    .load (branch_enable),
+    .load_val (bus),
     .limit (8'hff),
     .count (code_pointer)
   );
@@ -317,6 +337,8 @@ module computer(input clk, reset, input[2047:0] code);
   counter instruction_counter(
     .clk (clk),
     .reset (reset),
+    .load (1'b0),
+    .load_val (8'h00),
     .limit ((instruction_enable_in) ? current_instruction_limit: instruction_limit_out),
     .count (instruction_count)
   );
@@ -403,9 +425,9 @@ module computer(input clk, reset, input[2047:0] code);
     .operation (instruction_out),
     .in (bus),
     .out (bus_out),
-    .equal (),
-    .greater (),
-    .lesser ()
+    .equal (equal),
+    .greater (greater),
+    .lesser (lesser)
   );
 
   stack stack(
