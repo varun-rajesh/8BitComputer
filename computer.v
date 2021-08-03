@@ -54,6 +54,7 @@ module computer(input clk, reset, input[2047:0] code);
       8'h0d: current_instruction_limit <= 8'h02;
       8'h0e: current_instruction_limit <= 8'h03;
       8'h0f: current_instruction_limit <= 8'h03;
+      8'h10: current_instruction_limit <= 8'h03;
       default: current_instruction_limit <= 8'h01;
     endcase
   end
@@ -296,6 +297,16 @@ module computer(input clk, reset, input[2047:0] code);
     stack_write_enable <= (instruction_count == 8'h01 & instruction_out == 8'h0c) ? 1'b1 : 1'b0;
   end
 
+  //mem_read_enable
+  always @ * begin
+    mem_read_enable <= (instruction_count == 8'h02 & instruction_out == 8'h10) ? 1'b1 : 1'b0;
+  end
+
+  //mem_write_enable
+  always @ * begin
+    mem_write_enable <= (instruction_count == 8'h02 & (instruction_out == 8'h0e | instruction_out == 8'h0f)) ? 1'b1 : 1'b0;
+  end
+
   counter cp(
     .clk (clk),
     .reset (reset),
@@ -408,6 +419,11 @@ module computer(input clk, reset, input[2047:0] code);
 
   memory mem(
     .clk (clk),
-    .read_enable ()
+    .read_enable (mem_read_enable),
+    .write_enable (mem_write_enable),
+    .reset (reset),
+    .address (operand1_out),
+    .data (bus),
+    .out (bus_out)
   );
 endmodule
