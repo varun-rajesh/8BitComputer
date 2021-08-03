@@ -11,7 +11,6 @@ module byte_mux(input[7:0] a, b, input sel, output[7:0] out);
   );
 endmodule
 
-//sel0 = 1: a or c; sel1 = 1: a or b
 module quad_byte_mux(input[7:0] a, b, c, d, input sel0, sel1, output[7:0] out);
   wire[7:0] mux0_p, mux1_p;
 
