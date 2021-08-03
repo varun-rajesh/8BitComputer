@@ -1,13 +1,13 @@
-module counter(input clk, reset, input[7:0] limit, output[7:0] count);
+module counter(input clk, reset, load, input[7:0] limit, load_val, output[7:0] count);
 
-  wire[7:0] n;
+  wire[7:0] n, m;
   wire[7:0] count_bar;
   wire[7:0] count_p;
   wire carry;
 
   d_ff dff[7:0](
     .clk (clk),
-    .d (n),
+    .d (m),
     .preset (1'b1),
     .clear (reset),
     .q (count),
@@ -21,11 +21,18 @@ module counter(input clk, reset, input[7:0] limit, output[7:0] count);
     .carry (carry)
   );
 
-  byte_mux m(
+  byte_mux mux0(
     .a (8'b00000000),
     .b (count_p),
     .sel (count_p == limit),
     .out (n)
+  );
+
+  byte_mux mux1(
+    .a (load_val),
+    .b (n),
+    .sel (load),
+    .out (m)
   );
 
 endmodule
